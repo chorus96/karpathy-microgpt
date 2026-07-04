@@ -108,6 +108,25 @@ $$\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}$$
 ### 미분 / 도함수 (Derivative, Differentiation)
 어떤 함수에서 **입력이 아주 조금 변할 때 출력이 얼마나 변하는지**를 나타내는 값(순간 변화율). 신경망 학습의 핵심 수학 도구입니다.
 
+**주요 법칙 (미분 법칙):**
+
+아래 법칙들은 복잡한 함수의 미분을 **기본 조각들의 미분으로 분해**하는 규칙입니다. microgpt의 `Value` 클래스는 바로 이 규칙들을 각 연산의 역전파에 구현해 두었습니다.
+
+| 법칙 | 수식 | 비고 |
+|---|---|---|
+| 상수 | $\frac{d}{dx}c = 0$ | 상수는 변하지 않으므로 0 |
+| 상수배 | $\frac{d}{dx}(c \cdot f) = c \cdot f'$ | 상수는 밖으로 |
+| 합·차 | $(f \pm g)' = f' \pm g'$ | `+` 연산의 역전파 (기울기를 그대로 양쪽에 전달) |
+| 곱 (Product Rule) | $(f g)' = f'g + f g'$ | `*` 연산의 역전파 |
+| 몫 (Quotient Rule) | $\left(\frac{f}{g}\right)' = \frac{f'g - fg'}{g^2}$ | 나눗셈의 미분 |
+| 거듭제곱 (Power Rule) | $\frac{d}{dx}x^n = n\,x^{n-1}$ | `**` 연산 (ReLU²·RMS에 사용) |
+| 연쇄 법칙 (Chain Rule) | $\frac{d}{dx}f(g(x)) = f'(g(x)) \cdot g'(x)$ | 합성 함수 → 아래 별도 항목 참고 |
+| 지수 | $\frac{d}{dx}e^x = e^x$ | `exp` 연산 |
+| 로그 | $\frac{d}{dx}\ln x = \frac{1}{x}$ | `log` 연산 |
+| ReLU | $\frac{d}{dx}\max(0,x) = \begin{cases}1 & x>0\\0 & x<0\end{cases}$ | `relu` 연산 (0에서는 관례상 0) |
+
+> 이 표의 각 행은 `gpt.py`의 `Value` 클래스에서 `+`, `*`, `**`, `exp`, `log`, `relu`의 `_backward` 함수로 그대로 구현됩니다. 즉 **자동 미분이란 이 기본 법칙들을 연쇄 법칙으로 이어 붙인 것**입니다.
+
 ### 자동 미분 (Automatic Differentiation, autograd)
 연산 그래프를 따라 미분을 **자동으로 계산**하는 기법. 사람이 손으로 도함수를 유도하지 않아도, 각 기본 연산의 미분 규칙을 조합해 전체 기울기를 구합니다. microgpt는 이를 `Value` 클래스로 직접 구현합니다.
 
