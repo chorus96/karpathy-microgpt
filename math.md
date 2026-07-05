@@ -177,6 +177,45 @@ $$\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}$$
 
 ## 5. 선형대수와 정규화 (Linear Algebra & Normalization)
 
+### 벡터 연산의 주요 법칙 (Vector Operation Laws)
+벡터 연산은 크게 **덧셈/뺄셈**, **스칼라배**, **내적**으로 나뉩니다. microgpt에서도 임베딩 덧셈, RMSNorm의 스칼라배, 어텐션의 내적으로 모두 등장합니다.
+
+**① 벡터 덧셈** — 같은 차원의 두 벡터를 대응 원소끼리 더함: $\vec{a}+\vec{b}=(a_1+b_1,\ a_2+b_2,\ \dots)$
+
+| 법칙 | 수식 | 의미 |
+|---|---|---|
+| 교환법칙 | $\vec{a}+\vec{b}=\vec{b}+\vec{a}$ | 순서를 바꿔도 같다 |
+| 결합법칙 | $(\vec{a}+\vec{b})+\vec{c}=\vec{a}+(\vec{b}+\vec{c})$ | 묶는 순서 무관 |
+| 항등원 (영벡터) | $\vec{a}+\vec{0}=\vec{a}$ | 0을 더해도 그대로 |
+| 역원 | $\vec{a}+(-\vec{a})=\vec{0}$ | 반대 벡터를 더하면 0 |
+
+> microgpt: `x = [t + p for t, p in zip(tok_emb, pos_emb)]` — 토큰 임베딩 + 위치 임베딩.
+
+**② 스칼라배** — 모든 원소에 같은 수를 곱함: $c\vec{a}=(ca_1,\ ca_2,\ \dots)$
+
+| 법칙 | 수식 | 의미 |
+|---|---|---|
+| 벡터에 대한 분배 | $c(\vec{a}+\vec{b})=c\vec{a}+c\vec{b}$ | 합에 분배 가능 |
+| 스칼라에 대한 분배 | $(c+d)\vec{a}=c\vec{a}+d\vec{a}$ | 스칼라 합에 분배 |
+| 결합법칙 | $c(d\vec{a})=(cd)\vec{a}$ | 스칼라끼리 먼저 곱해도 됨 |
+| 항등원 | $1\cdot\vec{a}=\vec{a}$ | 1을 곱하면 그대로 |
+
+> microgpt: `return [xi * scale for xi in x]` — RMSNorm에서 벡터에 스칼라 `scale`을 곱함.
+
+**③ 내적** — 두 벡터 → 하나의 스칼라: $\vec{a}\cdot\vec{b}=a_1b_1+a_2b_2+\cdots$ (자세한 정의는 [2절 내적](#내적-dot-product) 참고)
+
+| 법칙 | 수식 | 의미 |
+|---|---|---|
+| 교환법칙 | $\vec{a}\cdot\vec{b}=\vec{b}\cdot\vec{a}$ | 순서 무관 |
+| 분배법칙 | $\vec{a}\cdot(\vec{b}+\vec{c})=\vec{a}\cdot\vec{b}+\vec{a}\cdot\vec{c}$ | 합에 분배 |
+| 스칼라 결합 | $(c\vec{a})\cdot\vec{b}=c(\vec{a}\cdot\vec{b})$ | 스칼라를 밖으로 |
+| 자기 자신 | $\vec{a}\cdot\vec{a}=\lVert\vec{a}\rVert^2\ge 0$ | 크기의 제곱 (항상 0 이상) |
+| 기하적 의미 | $\vec{a}\cdot\vec{b}=\lVert\vec{a}\rVert\lVert\vec{b}\rVert\cos\theta$ | 두 벡터의 사잇각 반영 |
+
+> ⚠️ 내적은 **결합법칙이 없습니다**: $\vec{a}\cdot\vec{b}$가 이미 스칼라라서 다시 벡터와 내적할 수 없기 때문입니다.
+
+**핵심**: 덧셈·스칼라배는 교환·결합·분배·항등원이 모두 성립하며, 이 성질들이 곧 **벡터공간**의 정의이자 **선형성**의 근거입니다([`bg.md`](bg.md) 참고). 내적은 교환·분배는 되지만 결합법칙은 안 되고, 대신 각도·크기라는 기하적 의미를 줍니다.
+
 ### 정규화 (Normalization)
 값들의 **크기(스케일)를 일정한 기준으로 맞추는** 것. 신경망에서 각 층의 출력 분포를 안정화해 학습을 원활하게 합니다.
 
