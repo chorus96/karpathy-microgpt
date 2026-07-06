@@ -52,9 +52,39 @@ return out   # gpt.py:52 — 연산 결과 Value 객체를 반환
 ### `lambda`
 이름 없는 **한 줄짜리 익명 함수**를 만듭니다. 짧은 함수를 즉석에서 정의할 때 유용합니다.
 
+**문법:** `lambda 인자들: 표현식`
+- `def`와 달리 **이름이 없고**, 본문은 **단 하나의 표현식**만 올 수 있습니다(문(statement)·여러 줄 불가).
+- 그 표현식의 결과가 `return` 없이 **자동으로 반환**됩니다.
+
 ```python
-self._backward = lambda: None   # gpt.py:41 — 인자도 동작도 없는 기본 함수를 즉석 생성
+lambda x: x + 1        # def f(x): return x + 1 과 동일
+lambda: None           # 인자 없음, 항상 None 반환
+lambda a, b=2: a * b   # 기본값 인자도 가능
 ```
+
+이 저장소에는 세 가지 대표적 용례가 있습니다.
+
+**① 인자도 동작도 없는 기본 함수 (gpt.py:41)**
+```python
+self._backward = lambda: None   # 아무것도 하지 않는 기본 역전파 함수
+```
+`Value` 노드가 처음 만들어질 때의 기본 `_backward`입니다. 잎(leaf) 노드처럼 역전파할 것이 없을 때, 호출해도 안전하도록 "아무 일도 안 하는 함수"를 넣어 둡니다. 이후 실제 연산에서 진짜 `_backward`로 교체됩니다.
+
+**② 인자와 기본값을 가진 팩토리 함수 (gpt.py:123)**
+```python
+matrix = lambda nout, nin, std=0.02: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]
+state_dict = {'wte': matrix(vocab_size, n_embd), ...}
+```
+`nout × nin` 크기의 가중치 행렬을 만드는 짧은 팩토리입니다. 인자 `nout`, `nin`과 **기본값 인자** `std=0.02`를 받아, `matrix(vocab_size, n_embd)`나 `matrix(n_embd, n_embd, std=0)`처럼 재사용합니다. `def`로 써도 되지만, 한 줄이라 lambda가 간결합니다.
+
+**③ 다른 함수의 인자로 넘기기 (download_wikipedia.py:177)**
+```python
+for chunk in iter(lambda: f.read(8192), b''):
+    md5_hash.update(chunk)
+```
+`iter(호출가능객체, 종료값)` 형태에서, **매번 호출될 함수**로 lambda를 넘깁니다. `f.read(8192)`를 반복 호출하다가 결과가 `b''`(빈 바이트, 파일 끝)가 되면 멈춥니다. 이처럼 "호출할 때마다 값을 만드는 짧은 함수"가 필요한 자리에 lambda가 잘 맞습니다.
+
+> **lambda vs def**: lambda는 *식(expression)*이라 변수 대입·인자 전달 등 값이 필요한 자리에 바로 쓸 수 있습니다. 반면 여러 줄 로직, 문서화 문자열(docstring), 복잡한 분기가 필요하면 `def`가 적합합니다.
 
 ---
 
