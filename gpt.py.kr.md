@@ -2,6 +2,16 @@
 
 순수하고 의존성 없는 Python으로 GPT를 **학습하고 추론**하는 243줄짜리 완결 알고리즘입니다. `import math`, `os`, `random` 외에는 아무것도 쓰지 않습니다. 이 문서는 파일을 위에서 아래로 실행 순서대로 분석하고, 블록 다이어그램으로 구조를 시각화합니다.
 
+### 파일 서두 독스트링 번역
+
+파일 맨 위(1–7행)의 독스트링 원문과 번역입니다.
+
+> *"The most atomic way to train and inference a GPT in pure, dependency-free Python. This file is the complete algorithm. Everything else is just efficiency."* — @karpathy
+
+> **"순수하고 의존성 없는 Python만으로 GPT를 학습하고 추론하는 가장 원자적인(atomic) 방법. 이 파일이 완전한 알고리즘이다. 나머지는 모두 효율성을 위한 것일 뿐이다."** — @karpathy
+
+여기서 **atomic(원자적)**은 "더 이상 쪼갤 수 없는, 가장 근본적이고 최소한의"라는 뜻입니다. 원자가 물질의 최소 단위이듯, GPT 알고리즘을 더는 단순화할 수 없을 만큼 핵심만 남겼음을 강조합니다.
+
 ---
 
 ## 전체 구조 (Block Diagram)
