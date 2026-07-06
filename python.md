@@ -370,6 +370,73 @@ doc = docs[step % len(docs)]   # gpt.py:199 — 나머지(순환 인덱스)
 
 ---
 
+## 11. 주요 내장 함수 (Built-in Functions)
+
+키워드는 아니지만 `import` 없이 바로 쓸 수 있는 **내장 함수**들입니다. 이 저장소 코드에서 실제로 호출되는 것들만 목적별로 정리했습니다.
+
+### 시퀀스 생성·순회
+```python
+for li in range(n_layer):                     # gpt.py:125 — range(n): 0..n-1 정수 시퀀스
+for i, ch in enumerate(chars):                # gpt.py:28 — enumerate: (인덱스, 값) 쌍으로 순회
+for wi, xi in zip(wo, x):                      # gpt.py:138 — zip: 여러 시퀀스를 짝지어 동시 순회
+for v in reversed(topo):                       # gpt.py:105 — reversed: 역순으로 순회(역전파에 사용)
+for chunk in iter(lambda: f.read(8192), b''):  # download_wikipedia.py:177 — iter(호출가능, 종료값)
+```
+
+| 함수 | 역할 |
+|---|---|
+| `range(n)` / `range(a, b)` | 정수 시퀀스 생성 (반복 횟수·인덱스) |
+| `enumerate(seq)` | 각 요소를 `(순번, 값)` 쌍으로 |
+| `zip(a, b, ...)` | 여러 시퀀스를 대응 요소끼리 묶음 |
+| `reversed(seq)` | 순서를 뒤집어 순회 |
+| `iter(호출가능, 종료값)` | 종료값이 나올 때까지 함수를 반복 호출 |
+
+### 정렬·집합·자료형
+```python
+chars = ['<BOS>'] + sorted(set(''.join(docs)))  # gpt.py:26 — set으로 중복 제거 후 sorted로 정렬
+self._prev = set(_children)                      # gpt.py:42 — 중복 없는 집합 생성
+state_dict = {k: [list(row) for row in mat] ...} # run.py:57 — list(): 다른 시퀀스를 리스트로 변환
+```
+
+- **`sorted(iterable)`**: 요소를 **정렬한 새 리스트**를 반환합니다. 원본은 그대로 둡니다(리스트의 `.sort()`는 원본을 바꾸는 것과 대비). `sorted(set(...))`는 "**중복 제거 → 정렬**"의 관용구로, 여기서는 문자들을 알파벳 순 어휘로 만듭니다.
+- **`set(iterable)`**: **중복 없는 집합**을 만듭니다. `set(''.join(docs))`는 모든 문자에서 고유 문자만 추립니다. 빈 집합은 `set()`으로 만듭니다.
+- **`list(iterable)`**: 다른 반복 가능한 객체(튜플·제너레이터 등)를 **리스트로 변환**합니다.
+
+### 집계 (Aggregation)
+```python
+print(f"num docs: {len(docs)}")               # gpt.py:23 — len: 길이(요소 개수)
+return [sum(wi * xi for wi, xi in zip(wo, x)) for wo in w]  # gpt.py:138 — sum: 총합
+max_val = max(val.data for val in logits)     # gpt.py:141 — max: 최댓값(softmax 안정화)
+n = min(block_size, len(tokens) - 1)          # gpt.py:201 — min: 최솟값
+```
+
+| 함수 | 역할 |
+|---|---|
+| `len(x)` | 요소 개수(길이) |
+| `sum(iterable)` | 모든 요소의 합 (∑에 대응 — [`math.md`](math.md) 참고) |
+| `max(iterable)` / `min(iterable)` | 최댓값 / 최솟값 |
+
+### 자료형 변환·검사
+```python
+num_steps = int(args[i + 1])       # train.py:26 — 문자열 → 정수
+temperature = float(args[i + 1])   # run.py:28 — 문자열 → 실수
+other = other if isinstance(other, Value) else Value(other)  # gpt.py:46 — 타입 검사
+```
+
+- **`int(x)` / `float(x)`**: 문자열이나 수를 **정수 / 실수로 변환**합니다. CLI 인자(항상 문자열)를 숫자로 바꿀 때 필수입니다.
+- **`isinstance(객체, 타입)`**: 객체가 그 **타입인지 검사**해 참/거짓을 반환합니다. `Value` 연산에서 상대가 이미 `Value`인지 확인해, 아니면 감싸 주는 데 씁니다.
+
+### 입출력
+```python
+docs = [... for l in open('input.txt').read()...]  # gpt.py:21 — open: 파일 열기
+print(f"vocab size: {vocab_size}")                 # gpt.py:31 — print: 표준 출력
+```
+
+- **`open(경로, 모드)`**: 파일을 열어 파일 객체를 반환합니다. 보통 [`with`](#with)와 함께 써서 자동으로 닫습니다.
+- **`print(...)`**: 값을 표준 출력에 씁니다. `end=""`(줄바꿈 억제), `flush=True`(즉시 출력) 같은 옵션도 지원합니다.
+
+---
+
 ## 참고
 
 이 키워드와 문법들은 이 저장소의 순수 Python 구현(`gpt.py` 243줄 등)에 그대로 쓰여 있습니다. GPT의 알고리즘이 어떤 언어 기능 위에서 구현되는지 확인하려면, 각 예시의 파일·줄 번호를 직접 열어 보세요. 관련 개념은 [`llm.md`](llm.md)(LLM 용어)와 [`math.md`](math.md)(수학 용어)에도 정리되어 있습니다.
