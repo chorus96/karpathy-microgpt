@@ -4,7 +4,10 @@ set -euo pipefail
 # Install uv if not available
 if ! command -v uv &>/dev/null; then
     echo "uv not found, installing..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # SSL certificate verification is disabled (-k) by default.
+    # WARNING: this exposes the "curl | sh" install to man-in-the-middle
+    # tampering -- only run this on a network you trust.
+    curl -kLsSf https://astral.sh/uv/install.sh | sh
 
     # Source the env so uv is available in the current shell
     export PATH="$HOME/.local/bin:$PATH"
