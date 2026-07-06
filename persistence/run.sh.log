@@ -1,0 +1,24 @@
+Loading model from model.json...
+Loaded: 27 tokens, 4064 params, context length 8
+
+--- inference (temperature=0.6) ---
+sample  1: alerma
+sample  2: janli
+sample  3: kaash
+sample  4: ma
+sample  5: amanne
+sample  6: ierin
+sample  7: karis
+sample  8: reman
+sample  9: hali
+sample 10: camri
+sample 11: hamale
+sample 12: amila
+sample 13: sieie
+sample 14: aryni
+sample 15: kerian
+sample 16: slona
+sample 17: menea
+sample 18: eran
+sample 19: anadi
+sample 20: kilila
