@@ -202,11 +202,34 @@ assert isinstance(other, (int, float)), "only supporting int/float powers for no
 ## 8. 컨텍스트 관리와 별칭 (Context & Aliasing)
 
 ### `with`
-**컨텍스트 매니저**를 사용해, 블록이 끝나면 자원을 자동으로 정리합니다(예: 파일을 자동으로 닫음).
+**컨텍스트 매니저(context manager)**를 사용해, 블록에 들어갈 때 자원을 열고 **블록이 끝나면 자동으로 정리**합니다. 파일·네트워크 연결처럼 "열었으면 반드시 닫아야 하는" 자원에 씁니다.
+
+**동작 원리:** `with 객체 as 이름:` 형태에서, 객체의 `__enter__()`가 블록 진입 시 호출되어 `이름`에 결과를 넣고, 블록을 벗어날 때 `__exit__()`가 호출되어 정리합니다. **중간에 예외가 나도 `__exit__`은 반드시 실행**되므로, 다음 `try/finally`와 사실상 같습니다.
 
 ```python
-with open(model_path, 'r') as f:   # run.py:37 — 파일을 열고, 블록 종료 시 자동으로 닫음
+# with 문:
+with open(path) as f:
+    data = f.read()
+# 위는 아래와 동등:
+f = open(path)
+try:
+    data = f.read()
+finally:
+    f.close()   # 예외가 나도 반드시 닫힘
 ```
+
+이 저장소의 실제 용례:
+
+```python
+with open(model_path, 'r') as f:   # run.py:37 — 읽기용 파일, 블록 종료 시 자동 닫힘
+    model = json.load(f)
+with open(output_path, 'w') as f:  # train.py:265 — 쓰기용 파일
+    json.dump(model, f)
+with urllib.request.urlopen(url, timeout=30) as response:  # download_wikipedia.py:59 — 네트워크 연결도 자동 정리
+    html = response.read().decode('utf-8')
+```
+
+`with`를 쓰면 `f.close()`를 깜빡하거나 예외로 건너뛰는 실수를 원천적으로 막아, 파일 핸들·소켓 누수를 방지합니다.
 
 ### `as`
 객체에 **별칭(이름)을 붙입니다**. `with ... as`, `except ... as`, `import ... as`에서 쓰입니다.
@@ -228,11 +251,30 @@ import os   # gpt.py:9 — 파일 존재 확인 등 운영체제 기능 사용
 ```
 
 ### `from`
-모듈에서 **특정 요소만 골라 불러옵니다**(`from 모듈 import 이름`).
+모듈에서 **특정 요소만 골라 불러옵니다**(`from 모듈 import 이름`). `import 모듈`과 달리, 가져온 이름을 **모듈 접두어 없이 바로** 쓸 수 있습니다.
 
 ```python
-from pathlib import Path   # download_wikipedia.py:21 — pathlib 모듈에서 Path 클래스만 가져옴
+import pathlib
+pathlib.Path("x")   # import 모듈 → 매번 "모듈." 접두어 필요
+
+from pathlib import Path
+Path("x")           # from ... import → 이름만으로 바로 사용
 ```
+
+이 저장소의 실제 용례:
+
+```python
+from pathlib import Path      # download_wikipedia.py:21 — pathlib에서 Path 클래스만
+from datetime import datetime # download_wikipedia.py:22 — datetime 모듈에서 datetime 클래스만
+```
+
+**여러 개 가져오기 / 별칭:**
+```python
+from os.path import join, exists, dirname   # 쉼표로 여러 이름을 한 번에
+from datetime import datetime as dt         # as로 별칭을 붙일 수도 있음
+```
+
+> **주의:** `from 모듈 import *`는 모듈의 모든 공개 이름을 한꺼번에 현재 이름공간에 쏟아붓습니다. 어떤 이름이 어디서 왔는지 알기 어려워지고 기존 이름과 충돌할 수 있어, 일반적으로 **권장되지 않습니다**. 이 저장소에서도 쓰지 않습니다.
 
 ---
 
