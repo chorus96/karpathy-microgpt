@@ -103,6 +103,40 @@ x = [max(0, xi) ** 2 for xi in x]  # ReLU² — Value.relu() 대신 내장 max()
 
 순전파 자체(임베딩 → 어텐션 → 잔차 → MLP → lm_head)는 [`train.py.kr.md`](train.py.kr.md)의 블록 다이어그램과 동일합니다.
 
+### `rmsnorm()` 자세히 보기
+
+세 헬퍼 함수 중 `rmsnorm()`은 숫자 목록(벡터) `x`의 **크기를 일정하게 맞춰** 계산을 안정시키는 정규화 함수입니다. 어텐션·MLP 블록 앞에서 값이 너무 커지거나 작아지는 것을 막습니다.
+
+```python
+def rmsnorm(x):
+    ms = sum(xi * xi for xi in x) / len(x)   # ① 제곱들의 평균 (mean square)
+    scale = (ms + 1e-5) ** -0.5              # ② 1/√ms (1e-5는 0 나눗셈 방지)
+    return [xi * scale for xi in x]          # ③ 각 원소에 배율을 곱함
+```
+
+**줄별 설명:**
+
+- **① `ms = sum(xi * xi for xi in x) / len(x)`** — 각 원소를 제곱(`xi * xi`)해 모두 더한 뒤(`sum`), 개수(`len(x)`)로 나눕니다. 즉 **제곱들의 평균**으로, 벡터가 얼마나 "큰지"를 나타냅니다.
+
+  $$ms = \frac{1}{n}\sum_i x_i^2$$
+
+- **② `scale = (ms + 1e-5) ** -0.5`** — `** -0.5`는 **-0.5 제곱 = 제곱근의 역수**($1/\sqrt{\cdot}$)입니다. `1e-5`(0.00001)는 `ms`가 0일 때 0으로 나누는 사고를 막는 안전장치입니다. 벡터가 클수록 `scale`은 작아집니다.
+
+  $$scale = \frac{1}{\sqrt{ms + \epsilon}}$$
+
+- **③ `return [xi * scale for xi in x]`** — 각 원소에 `scale`을 곱한 **새 목록**을 돌려줍니다. 큰 벡터는 줄이고 작은 벡터는 키워, **방향(부호·비율)은 유지한 채 크기만 1 근처로** 표준화합니다.
+
+**이름의 뜻 (RMS = Root Mean Square):** 계산 순서가 곧 이름입니다 — Square(제곱) → Mean(평균) → Root(제곱근).
+
+$$\text{rmsnorm}(x)_i = \frac{x_i}{\sqrt{\tfrac{1}{n}\sum_j x_j^2 + \epsilon}}$$
+
+**숫자 예시** — `x = [2.0, -4.0, 4.0]`:
+1. 제곱합 `4+16+16 = 36`, 평균 `ms = 12`
+2. `scale = (12 + 1e-5) ** -0.5 ≈ 0.2887`
+3. 결과 ≈ `[0.577, -1.155, 1.155]` — 크기만 표준화되고 비율은 그대로
+
+> **참고:** LayerNorm과 달리 **평균 빼기와 편향(bias)이 없어 더 단순**합니다. 학습판(`train.py`)에서는 `xi`가 `Value` 객체라 자동 미분되지만, 추론판(`run.py`)에서는 순수 float로 똑같은 계산을 더 빠르게 수행합니다.
+
 ## ⑥ 샘플 생성 (115–130행)
 
 ```python
